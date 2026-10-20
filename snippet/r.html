@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Claim your payment</title>
+    <!--
+      Your claim page, served at https://www.loofta.com/r. A payment link is https://www.loofta.com/r#<secret>: the part
+      after the # is a bearer secret, like cash, and browsers never send it to your server. Load the Styx loader FIRST,
+      and no analytics, tag manager or other third-party script on this page; never read location.hash yourself.
+      Send these headers with it: Referrer-Policy: no-referrer, Cache-Control: no-store, X-Robots-Tag: noindex.
+    -->
+    <script src="https://styx.cash/embed/v2/styx.js" integrity="sha384-YWAYXzMo8whQfNbI8L7GLMTJ7s3r5n6eHP6+dnT0CL57TrgB6hPnmbseOOoAYqHo" crossorigin="anonymous"></script>
+    <script>
+      // the loader reads the secret, removes it from the address bar and the history, and hands it to the Styx block
+      Styx.claimLink({ integrator: "loofta" }).then(function (o) {
+        // claimed, cancelled, refused, failed or closed
+        var s = document.getElementById("status");
+        if (s) s.textContent = o.status;
+      });
+    </script>
+    <style>
+      body { font: 15px/1.5 system-ui, sans-serif; margin: 0; background: #0f0f12; color: #f4f2ec; }
+      main { max-width: 440px; margin: 48px auto; padding: 0 20px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Someone sent you SOL</h1>
+      <p id="status" role="status"></p>
+    </main>
+  </body>
+</html>

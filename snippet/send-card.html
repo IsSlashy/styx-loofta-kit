@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Send card with Styx (snippet)</title>
+    <!--
+      The smallest send card with the Styx option. Your page's content security policy must allow https://styx.cash in
+      script-src, frame-src and child-src. Devnet only. Your page is told a status and the block's height, nothing else.
+    -->
+    <style>
+      body { font: 15px/1.5 system-ui, sans-serif; margin: 0; background: #0f0f12; color: #f4f2ec; }
+      .card { max-width: 440px; margin: 48px auto; padding: 20px; border: 1px solid #2a2a30; border-radius: 18px; }
+      label { display: block; font-size: 12px; color: #a7a49c; margin: 12px 0 4px; }
+      input { width: 100%; box-sizing: border-box; padding: 10px; border-radius: 10px; border: 1px solid #2a2a30; background: #16161a; color: inherit; }
+      .option { display: flex; align-items: center; justify-content: space-between; margin: 16px 0 12px; }
+      button { padding: 10px 16px; border-radius: 999px; border: 0; background: #ff5a1a; color: #0f0f12; font-weight: 600; }
+      /* no perspective, filter, opacity below 1 or 3D transform on #styx-box or around it */
+      #styx-box[hidden] { display: none; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <label for="to">To</label>
+      <input id="to" placeholder="@handle" />
+      <label for="amount">Amount (SOL)</label>
+      <input id="amount" value="0.01" inputmode="decimal" />
+      <div class="option">
+        <span>Pay privately · Styx</span>
+        <input id="private" type="checkbox" aria-label="Pay privately with Styx" />
+      </div>
+      <div id="styx-box" hidden></div>
+      <button id="send">Send</button>
+      <p id="status" role="status"></p>
+    </div>
+
+    <script src="https://styx.cash/embed/v2/styx.js" integrity="sha384-YWAYXzMo8whQfNbI8L7GLMTJ7s3r5n6eHP6+dnT0CL57TrgB6hPnmbseOOoAYqHo" crossorigin="anonymous"></script>
+    <script>
+      (function () {
+        var box = document.getElementById("styx-box");
+        var send = document.getElementById("send");
+        var amount = document.getElementById("amount");
+        var status = document.getElementById("status");
+        var pay = null;
+
+        function open() {
+          if (pay) return;
+          // one Styx block in the card; "Pay privately" inside it is the button that pays
+          pay = Styx.payLink({ integrator: "loofta", amount: amount.value.trim(), container: box });
+          var mine = pay;
+          mine.then(function (o) {
+            if (pay !== mine) return;
+            pay = null;
+            if (o.status === "closed") return open(); // "Done" in the block: a fresh one for the next payment
+            status.textContent = o.status; // sent, cancelled, refused or failed
+          });
+        }
+        function close() {
+          if (pay) pay.close();
+          pay = null;
+        }
+
+        document.getElementById("private").addEventListener("change", function (e) {
+          var on = e.target.checked;
+          box.hidden = !on;
+          send.hidden = on; // with Styx on, your own Send button goes
+          status.textContent = "";
+          if (on) open();
+          else close();
+        });
+        // another amount before the payment: the same block takes it (the loader waits 600 ms after the last change)
+        amount.addEventListener("input", function () {
+          if (pay) pay.setAmount(amount.value.trim());
+        });
+      })();
+    </script>
+  </body>
+</html>
